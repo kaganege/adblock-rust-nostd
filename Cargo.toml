@@ -28,8 +28,8 @@ addr = { version = "0.15", default-features = false, features = [
 ], optional = true }
 url = "2.5"
 percent-encoding = "2.1"
-once_cell = "1.8"
-regex = "1.5"
+once_cell = "1.20.2"
+regex = "1.11.1"
 bitflags = "1.3"
 itertools = "0.13"
 idna = "1.0.3"
@@ -47,7 +47,10 @@ selectors = { version = "0.23", optional = true }
 serde_json = "1.0"
 thiserror = { version = "2.0.10", default-features = false }
 hashbrown = { version = "0.15.2", features = ["alloc", "serde"] }
-spin = { version = "0.9.8", default-features = false, features = ["mutex", "spin_mutex"] }
+spin = { version = "0.9.8", default-features = false, features = [
+  "mutex",
+  "spin_mutex",
+] }
 
 [dev-dependencies]
 criterion = "0.5"
