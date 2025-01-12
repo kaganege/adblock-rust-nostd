@@ -606,6 +606,7 @@ mod css_validation {
 mod css_validation {
   //! Methods for validating CSS selectors and style rules extracted from cosmetic filter rules.
   use super::{CosmeticFilterError, CosmeticFilterOperator};
+  use crate::prelude::*;
   use core::fmt::{Result as FmtResult, Write};
   use cssparser::{CowRcStr, ParseError, Parser, ParserInput, SourceLocation, ToCss, Token};
   use selectors::parser::SelectorParseErrorKind;
@@ -655,7 +656,7 @@ mod css_validation {
     fn has_procedural_operator(selector: &selectors::parser::Selector<SelectorImpl>) -> bool {
       let mut iter = selector.iter();
       loop {
-        while let Some(component) = iter.next() {
+        for component in iter.by_ref() {
           if is_procedural_operator(component) {
             return true;
           }
@@ -669,22 +670,22 @@ mod css_validation {
     fn is_procedural_operator(c: &selectors::parser::Component<SelectorImpl>) -> bool {
       use selectors::parser::Component;
       // Avoid using `to_procedural_operator.is_some()`, which will re-allocate the argument string.
-      match c {
-        Component::NonTSPseudoClass(NonTSPseudoClass::HasText(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::MatchesAttr(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::MatchesCss(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::MatchesCssBefore(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::MatchesCssAfter(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::MatchesPath(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::MinTextLength(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::Upward(_)) => true,
-        Component::NonTSPseudoClass(NonTSPseudoClass::Xpath(_)) => true,
-        _ => false,
-      }
+      matches!(
+        c,
+        Component::NonTSPseudoClass(NonTSPseudoClass::HasText(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::MatchesAttr(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::MatchesCss(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::MatchesCssBefore(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::MatchesCssAfter(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::MatchesPath(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::MinTextLength(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::Upward(_))
+          | Component::NonTSPseudoClass(NonTSPseudoClass::Xpath(_))
+      )
     }
 
     if let Some(prelude) = prelude {
-      if !prelude.0.iter().any(|s| has_procedural_operator(s)) {
+      if !prelude.0.iter().any(has_procedural_operator) {
         // There are no procedural filters, so all selectors use standard CSS.
         // It's ok to return that as a "single" selector.
         return Ok(vec![CosmeticFilterOperator::CssSelector(
@@ -722,7 +723,7 @@ mod css_validation {
         // - `.collect()` cannot work because it takes ownership of the iterator, which is
         //                still required later for `next_sequence`.
         let mut components = vec![];
-        while let Some(component) = iter.next() {
+        for component in iter.by_ref() {
           components.push(SelectorsPart::Component(component));
         }
         parts.extend(components.into_iter().rev());

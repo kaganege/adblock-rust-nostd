@@ -3,6 +3,7 @@
 //! responsible for managing the storage of regexes used by filters.
 
 use crate::filters::network::{compile_regex, CompiledRegex, NetworkFilter};
+use crate::prelude::*;
 
 use core::time::Duration;
 use hashbrown::HashMap;
@@ -35,8 +36,6 @@ pub struct RegexDebugEntry {
   /// A string representation of this regex, if available. It may be `None` if the regex has been
   /// cleaned up to conserve memory.
   pub regex: Option<String>,
-  /// When this regex was last used.
-  pub last_used: Instant,
   /// How many times this regex has been used.
   pub usage_count: usize,
 }
@@ -173,7 +172,6 @@ impl RegexManager {
       .map(|(k, e)| RegexDebugEntry {
         id: *k as u64,
         regex: e.regex.as_ref().map(|x| x.to_string()),
-        last_used: e.last_used,
         usage_count: e.usage_count,
       })
       .collect_vec()
@@ -222,7 +220,6 @@ mod tests {
   #[test]
   fn simple_match() {
     let mut regex_manager = RegexManager::default();
-    regex_manager.update_time();
 
     let filter = make_filter("||geo*.hltv.org^");
     assert!(filter.matches(&make_request("https://geo2.hltv.org/"), &mut regex_manager));
@@ -233,7 +230,6 @@ mod tests {
   #[test]
   fn discard_and_recreate() {
     let mut regex_manager = RegexManager::default();
-    regex_manager.update_time();
 
     let filter = make_filter("||geo*.hltv.org^");
     assert!(filter.matches(&make_request("https://geo2.hltv.org/"), &mut regex_manager));
@@ -241,7 +237,6 @@ mod tests {
     assert_eq!(get_active_regex_count(&regex_manager), 1);
 
     MockClock::advance(DEFAULT_DISCARD_UNUSED_TIME - Duration::from_secs(1));
-    regex_manager.update_time();
     // The entry shouldn't be discarded because was used during
     // last REGEX_MANAGER_DISCARD_TIME.
     assert_eq!(get_active_regex_count(&regex_manager), 1);
@@ -250,11 +245,9 @@ mod tests {
     // in the next cleanup() call. The call was 2 sec ago and is throttled
     // now.
     MockClock::advance(DEFAULT_CLEAN_UP_INTERVAL - Duration::from_secs(1));
-    regex_manager.update_time();
     assert_eq!(get_active_regex_count(&regex_manager), 1);
 
     MockClock::advance(Duration::from_secs(2));
-    regex_manager.update_time();
     // The entry is now outdated & cleanup() should be called => discard.
     assert_eq!(get_active_regex_count(&regex_manager), 0);
 

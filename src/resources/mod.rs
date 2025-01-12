@@ -2,17 +2,8 @@
 //! video files, etc. that can be returned as drop-in replacements for harmful
 //! equivalents from remote servers. Resources also encompass scriptlets, which
 //! can be injected into pages to inhibit malicious behavior.
-//!
-//! If the `resource-assembler` feature is enabled, the
-#![cfg_attr(not(feature = "resource-assembler"), doc = "`resource_assembler`")]
-#![cfg_attr(feature = "resource-assembler", doc = "[`resource_assembler`]")]
-//! module will assist with the construction of [`Resource`]s directly from the uBlock Origin
-//! project.
 
 use crate::prelude::*;
-
-#[cfg(feature = "resource-assembler")]
-pub mod resource_assembler;
 
 mod resource_storage;
 pub(crate) use resource_storage::parse_scriptlet_args;

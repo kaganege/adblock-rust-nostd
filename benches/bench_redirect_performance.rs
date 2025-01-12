@@ -95,56 +95,32 @@ fn get_preloaded_blocker(rules: Vec<NetworkFilter>) -> Blocker {
 }
 
 fn build_resources_for_filters(#[allow(unused)] filters: &[NetworkFilter]) -> ResourceStorage {
+  use adblock::resources::{MimeType, Resource, ResourceType};
+
   let mut resources = ResourceStorage::default();
 
-  #[cfg(feature = "resource-assembler")]
-  {
-    use adblock::resources::resource_assembler::assemble_web_accessible_resources;
-    use core::path::Path;
+  filters
+    .iter()
+    .filter(|f| f.is_redirect())
+    .map(|f| {
+      let mut redirect = f.modifier_option.as_ref().unwrap().as_str();
+      // strip priority, if present
+      if let Some(i) = redirect.rfind(':') {
+        redirect = &redirect[0..i];
+      }
 
-    let mut resource_data = assemble_web_accessible_resources(
-      Path::new("data/test/fake-uBO-files/web_accessible_resources"),
-      Path::new("data/test/fake-uBO-files/redirect-resources.js"),
-    );
-    #[allow(deprecated)]
-    resource_data.append(
-      &mut adblock::resources::resource_assembler::assemble_scriptlet_resources(Path::new(
-        "data/test/fake-uBO-files/scriptlets.js",
-      )),
-    );
-
-    resource_data.into_iter().for_each(|resource| {
+      Resource {
+        name: redirect.to_owned(),
+        aliases: vec![],
+        kind: ResourceType::Mime(MimeType::from_extension(redirect)),
+        content: base64::encode(redirect),
+        dependencies: vec![],
+        permission: Default::default(),
+      }
+    })
+    .for_each(|resource| {
       let _res = resources.add_resource(resource);
     });
-  }
-
-  #[cfg(not(feature = "resource-assembler"))]
-  {
-    use adblock::resources::{MimeType, Resource, ResourceType};
-
-    filters
-      .iter()
-      .filter(|f| f.is_redirect())
-      .map(|f| {
-        let mut redirect = f.modifier_option.as_ref().unwrap().as_str();
-        // strip priority, if present
-        if let Some(i) = redirect.rfind(':') {
-          redirect = &redirect[0..i];
-        }
-
-        Resource {
-          name: redirect.to_owned(),
-          aliases: vec![],
-          kind: ResourceType::Mime(MimeType::from_extension(redirect)),
-          content: base64::encode(redirect),
-          dependencies: vec![],
-          permission: Default::default(),
-        }
-      })
-      .for_each(|resource| {
-        let _res = resources.add_resource(resource);
-      });
-  }
 
   resources
 }

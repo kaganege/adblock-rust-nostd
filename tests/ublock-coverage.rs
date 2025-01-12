@@ -77,38 +77,6 @@ fn check_specific_rules() {
 
     assert!(checked.matched);
   }
-
-  #[cfg(feature = "resource-assembler")]
-  {
-    use std::path::Path;
-
-    // exceptions have no effect if important filter matches
-    let mut engine = Engine::from_rules_debug(
-      ["||cdn.taboola.com/libtrc/*/loader.js$script,redirect=noopjs,important,domain=cnet.com"],
-      Default::default(),
-    );
-    let resources = adblock::resources::resource_assembler::assemble_web_accessible_resources(
-      Path::new("data/test/fake-uBO-files/web_accessible_resources"),
-      Path::new("data/test/fake-uBO-files/redirect-resources.js"),
-    );
-    engine.use_resources(resources);
-
-    let request = Request::new(
-      "http://cdn.taboola.com/libtrc/test/loader.js",
-      "http://cnet.com",
-      "script",
-    )
-    .unwrap();
-    let checked = engine.check_network_request(&request);
-    assert_eq!(checked.matched, true);
-    assert_eq!(
-      checked.redirect,
-      Some(
-        "data:application/javascript;base64,KGZ1bmN0aW9uKCkgewogICAgJ3VzZSBzdHJpY3QnOwp9KSgpOwo="
-          .to_owned()
-      )
-    );
-  }
 }
 
 #[test]
