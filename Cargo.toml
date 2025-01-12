@@ -47,6 +47,7 @@ selectors = { version = "0.23", optional = true }
 serde_json = "1.0"
 thiserror = { version = "2.0.10", default-features = false }
 hashbrown = { version = "0.15.2", features = ["alloc", "serde"] }
+spin = { version = "0.9.8", default-features = false, features = ["mutex", "spin_mutex"] }
 
 [dev-dependencies]
 criterion = "0.5"

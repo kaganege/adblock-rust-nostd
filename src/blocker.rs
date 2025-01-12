@@ -6,6 +6,7 @@ use hashbrown::{HashMap, HashSet};
 use memchr::{memchr as find_char, memrchr as find_char_reverse};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use spin::Mutex;
 use thiserror::Error;
 
 #[cfg(feature = "object-pooling")]
@@ -122,7 +123,7 @@ pub struct Blocker {
   pub(crate) pool: TokenPool,
 
   // Not serialized
-  pub(crate) regex_manager: core::cell::RefCell<RegexManager>,
+  pub(crate) regex_manager: Mutex<RegexManager>,
 }
 
 impl Blocker {
@@ -132,8 +133,8 @@ impl Blocker {
     self.check_parameterised(request, resources, false, false)
   }
 
-  fn borrow_regex_manager(&self) -> core::cell::RefMut<RegexManager> {
-    self.regex_manager.borrow_mut()
+  fn borrow_regex_manager(&self) -> spin::MutexGuard<RegexManager> {
+    self.regex_manager.lock()
   }
 
   pub fn check_generic_hide(&self, hostname_request: &Request) -> bool {

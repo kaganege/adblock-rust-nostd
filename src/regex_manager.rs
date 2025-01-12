@@ -3,6 +3,7 @@
 //! responsible for managing the storage of regexes used by filters.
 
 use crate::filters::network::{compile_regex, CompiledRegex, NetworkFilter};
+#[cfg(feature = "regex-debug-info")]
 use crate::prelude::*;
 
 use core::time::Duration;
