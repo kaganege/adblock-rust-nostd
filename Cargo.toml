@@ -31,7 +31,7 @@ percent-encoding = "2.1"
 once_cell = "1.20.2"
 regex = "1.11.1"
 bitflags = "1.3"
-itertools = "0.13"
+itertools = "0.14.0"
 idna = "1.0.3"
 serde = { version = "1.0", default-features = false, features = [
   "derive",
@@ -40,7 +40,7 @@ serde = { version = "1.0", default-features = false, features = [
 seahash = "3" # seahash 4 introduces a breaking hash algorithm change
 memchr = "2.4"
 base64 = "0.13"
-rmp-serde = "0.15"
+rmp-serde = "1.3.0"
 lifeguard = { version = "^ 0.6.1", optional = true }
 cssparser = { version = "0.28", optional = true }
 selectors = { version = "0.23", optional = true }
