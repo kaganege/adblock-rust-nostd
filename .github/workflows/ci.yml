@@ -37,9 +37,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: rustup target add wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown
 
-      - name: Build npm package
-        run: npm ci
-
       - name: Cargo fuzz
         # Only runs on one runner for a few reasons:
         #    1. The 'fuzz' package has no entrypoints, befuddling the mvsc linker on Windows
