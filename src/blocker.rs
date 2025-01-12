@@ -15,7 +15,7 @@ use lifeguard::Pool;
 use crate::filters::network::{NetworkFilter, NetworkMatchable};
 use crate::optimizer;
 use crate::prelude::*;
-use crate::regex_manager::{RegexManager, RegexManagerDiscardPolicy};
+use crate::regex_manager::RegexManager;
 use crate::request::Request;
 use crate::resources::ResourceStorage;
 use crate::utils;
@@ -694,11 +694,6 @@ impl Blocker {
 
   pub fn tags_enabled(&self) -> Vec<String> {
     self.tags_enabled.iter().cloned().collect()
-  }
-
-  pub fn set_regex_discard_policy(&self, new_discard_policy: RegexManagerDiscardPolicy) {
-    let mut regex_manager = self.borrow_regex_manager();
-    regex_manager.set_discard_policy(new_discard_policy);
   }
 
   #[cfg(feature = "regex-debug-info")]

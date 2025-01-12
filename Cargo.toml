@@ -52,7 +52,6 @@ spin = { version = "0.9.8", default-features = false, features = ["mutex", "spin
 [dev-dependencies]
 criterion = "0.5"
 csv = "1"
-mock_instant = { version = "0.5" }
 # By default, reqwest builds openssl from source, which fails on missing/incompatible system dependencies
 reqwest = { version = "0.11", features = [
   "rustls-tls",

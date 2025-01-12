@@ -6,15 +6,15 @@ use crate::filters::network::{compile_regex, CompiledRegex, NetworkFilter};
 #[cfg(feature = "regex-debug-info")]
 use crate::prelude::*;
 
-use core::time::Duration;
 use hashbrown::HashMap;
 
 /// `*const NetworkFilter` could technically leak across threads through `RegexDebugEntry::id`, but
 /// it's disguised as a unique identifier and not intended to be dereferenced.
 unsafe impl Send for RegexManager {}
 
-const DEFAULT_CLEAN_UP_INTERVAL: Duration = Duration::from_secs(30);
-const DEFAULT_DISCARD_UNUSED_TIME: Duration = Duration::from_secs(180);
+// We can't cleanup regexes in no_std environments.
+// const DEFAULT_CLEAN_UP_INTERVAL: Duration = Duration::from_secs(30);
+// const DEFAULT_DISCARD_UNUSED_TIME: Duration = Duration::from_secs(180);
 
 /// Reports [`RegexManager`] metrics that may be useful for creating an optimized
 /// [`RegexManagerDiscardPolicy`].
@@ -46,23 +46,6 @@ struct RegexEntry {
   usage_count: usize,
 }
 
-/// Used for customization of regex discarding behavior in the [`RegexManager`].
-pub struct RegexManagerDiscardPolicy {
-  /// The [`RegexManager`] will check for and cleanup unused filters on this interval.
-  pub cleanup_interval: Duration,
-  /// The [`RegexManager`] will discard a regex if it hasn't been used for this much time.
-  pub discard_unused_time: Duration,
-}
-
-impl Default for RegexManagerDiscardPolicy {
-  fn default() -> Self {
-    Self {
-      cleanup_interval: DEFAULT_CLEAN_UP_INTERVAL,
-      discard_unused_time: DEFAULT_DISCARD_UNUSED_TIME,
-    }
-  }
-}
-
 type RandomState = core::hash::BuildHasherDefault<seahash::SeaHasher>;
 
 /// A manager that creates and stores all regular expressions used by filters.
@@ -74,7 +57,6 @@ type RandomState = core::hash::BuildHasherDefault<seahash::SeaHasher>;
 pub struct RegexManager {
   map: HashMap<*const NetworkFilter, RegexEntry, RandomState>,
   compiled_regex_count: usize,
-  discard_policy: RegexManagerDiscardPolicy,
 }
 
 fn make_regexp(filter: &NetworkFilter) -> CompiledRegex {
@@ -147,11 +129,6 @@ impl RegexManager {
   //   }
   // }
 
-  /// Customize the discard behavior of this [`RegexManager`].
-  pub fn set_discard_policy(&mut self, new_discard_policy: RegexManagerDiscardPolicy) {
-    self.discard_policy = new_discard_policy;
-  }
-
   /// Discard one regex, identified by its id from a [`RegexDebugEntry`].
   #[cfg(feature = "regex-debug-info")]
   pub fn discard_regex(&mut self, regex_id: u64) {
@@ -200,8 +177,6 @@ mod tests {
   use crate::filters::network::NetworkMatchable;
   use crate::request;
 
-  use mock_instant::global::MockClock;
-
   fn make_filter(line: &str) -> NetworkFilter {
     NetworkFilter::parse(line, true, Default::default()).unwrap()
   }
@@ -237,19 +212,8 @@ mod tests {
     assert_eq!(regex_manager.get_compiled_regex_count(), 1);
     assert_eq!(get_active_regex_count(&regex_manager), 1);
 
-    MockClock::advance(DEFAULT_DISCARD_UNUSED_TIME - Duration::from_secs(1));
-    // The entry shouldn't be discarded because was used during
-    // last REGEX_MANAGER_DISCARD_TIME.
-    assert_eq!(get_active_regex_count(&regex_manager), 1);
-
-    // The entry is entry is outdated, but should be discarded only
-    // in the next cleanup() call. The call was 2 sec ago and is throttled
-    // now.
-    MockClock::advance(DEFAULT_CLEAN_UP_INTERVAL - Duration::from_secs(1));
-    assert_eq!(get_active_regex_count(&regex_manager), 1);
-
-    MockClock::advance(Duration::from_secs(2));
-    // The entry is now outdated & cleanup() should be called => discard.
+    let regex_id = regex_manager.get_debug_regex_data()[0].id;
+    regex_manager.discard_regex(regex_id);
     assert_eq!(get_active_regex_count(&regex_manager), 0);
 
     // The entry is recreated, get_compiled_regex_count() increased +1.

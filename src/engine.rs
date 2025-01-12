@@ -4,7 +4,6 @@ use crate::blocker::{Blocker, BlockerOptions, BlockerResult};
 use crate::cosmetic_filter_cache::{CosmeticFilterCache, UrlSpecificResources};
 use crate::lists::{FilterSet, ParseOptions};
 use crate::prelude::*;
-use crate::regex_manager::RegexManagerDiscardPolicy;
 use crate::request::Request;
 use crate::resources::{Resource, ResourceStorage};
 use hashbrown::HashSet;
@@ -252,10 +251,6 @@ impl Engine {
     self
       .cosmetic_cache
       .hostname_cosmetic_resources(&self.resources, &request.hostname, generichide)
-  }
-
-  pub fn set_regex_discard_policy(&mut self, new_discard_policy: RegexManagerDiscardPolicy) {
-    self.blocker.set_regex_discard_policy(new_discard_policy);
   }
 
   #[cfg(feature = "regex-debug-info")]
