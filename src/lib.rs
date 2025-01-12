@@ -15,6 +15,10 @@
 //!
 //! Check the [`Engine`] documentation to get started with adblocking.
 
+#![cfg_attr(not(test), no_std)]
+
+extern crate alloc;
+
 // Own modules, currently everything is exposed, will need to limit
 pub mod blocker;
 #[cfg(feature = "content-blocking")]
@@ -37,20 +41,31 @@ pub use engine::Engine;
 #[doc(inline)]
 pub use lists::FilterSet;
 
+pub(crate) mod prelude {
+  pub use alloc::{
+    borrow::ToOwned,
+    boxed::Box,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+  };
+}
+
 #[cfg(test)]
 #[path = "../tests/test_utils.rs"]
 mod test_utils;
 
 #[cfg(test)]
 mod sync_tests {
-    #[allow(unused)]
-    fn static_assert_sync<S: Sync>() {
-        let _ = core::marker::PhantomData::<S>::default();
-    }
+  #[allow(unused)]
+  fn static_assert_sync<S: Sync>() {
+    let _ = core::marker::PhantomData::<S>;
+  }
 
-    #[test]
-    #[cfg(not(any(feature = "object-pooling", feature = "unsync-regex-caching")))]
-    fn assert_engine_sync() {
-        static_assert_sync::<crate::engine::Engine>();
-    }
+  #[test]
+  #[cfg(not(feature = "object-pooling"))]
+  fn assert_engine_sync() {
+    static_assert_sync::<crate::engine::Engine>();
+  }
 }
